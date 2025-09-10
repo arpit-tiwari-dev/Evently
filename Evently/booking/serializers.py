@@ -45,8 +45,8 @@ class CreateBookingSerializer(serializers.Serializer):
         """Validate that event exists"""
         try:
             event = Event.objects.get(id=value)
-            if not event.open_for_booking:
-                raise serializers.ValidationError("Event is not open for booking")
+            if not event.is_active:
+                raise serializers.ValidationError("Event is not active")
         except Event.DoesNotExist:
             raise serializers.ValidationError("Event not found")
         return value

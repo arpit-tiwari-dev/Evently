@@ -74,7 +74,7 @@ def create_booking(request):
             # Calculate total amount
             total_amount = event.price_per_ticket * number_of_tickets
             
-            # Create booking
+            # Create booking; availability is computed from bookings, so no direct event update is needed
             booking = Booking.objects.create(
                 event=event,
                 user=user,
@@ -82,10 +82,6 @@ def create_booking(request):
                 total_amount=total_amount,
                 status='confirmed'
             )
-            
-            # Update event capacity atomically
-            event.available_tickets = F('available_tickets') - number_of_tickets
-            event.save(update_fields=['available_tickets'])
             
             logger.info(f"Booking created successfully: {booking.id} for event {event_id}")
             
@@ -126,14 +122,9 @@ def cancel_booking(request, booking_id):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Update booking status
+            # Update booking status; availability is computed from bookings
             booking.status = 'cancelled'
             booking.save(update_fields=['status'])
-            
-            # Update event capacity atomically
-            event = Event.objects.select_for_update().get(id=booking.event.id)
-            event.available_tickets = F('available_tickets') + booking.ticket_count
-            event.save(update_fields=['available_tickets'])
             
             logger.info(f"Booking cancelled successfully: {booking_id}")
             
