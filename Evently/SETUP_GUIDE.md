@@ -2,10 +2,44 @@
 
 ## Quick Start
 
-### 1. Database Setup
+### Option 1: Docker Deployment (Recommended)
+
+1. **Prerequisites:**
+   - Docker and Docker Compose installed
+   - Git (to clone the repository)
+
+2. **Setup and Run:**
+   ```bash
+   # Navigate to the Evently directory
+   cd Evently
+   
+   # Create environment file
+   cp env.example .env
+   
+   # Build and run with Docker
+   docker-compose up --build
+   ```
+
+3. **Create Superuser:**
+   ```bash
+   docker-compose exec web python manage.py createsuperuser
+   ```
+
+4. **Access the Application:**
+   - API: http://localhost:8000/api/
+   - Admin: http://localhost:8000/admin/
+
+For detailed Docker deployment instructions, see [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
+
+### Option 2: Local Development Setup
+
+#### 1. Database Setup
 ```bash
 # Navigate to the Evently directory
 cd Evently
+
+# Install dependencies
+pip install -r requirements.txt
 
 # Create and apply migrations
 python manage.py makemigrations
@@ -15,7 +49,7 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-### 2. Start the Development Server
+#### 2. Start the Development Server
 ```bash
 python manage.py runserver
 ```
@@ -148,7 +182,11 @@ Create a `.env` file or set environment variables:
 ```bash
 DEBUG=False
 SECRET_KEY=your-production-secret-key
-DATABASE_URL=postgresql://user:password@localhost/evently_db
+DB_NAME=evently_db
+DB_USER=postgres
+DB_PASSWORD=your-secure-password
+DB_HOST=localhost
+DB_PORT=5432
 ```
 
 ### Database Migration
@@ -156,10 +194,17 @@ DATABASE_URL=postgresql://user:password@localhost/evently_db
 # For PostgreSQL (recommended for production)
 pip install psycopg2-binary
 
-# Update settings.py DATABASES configuration
 # Run migrations
 python manage.py migrate
 ```
+
+### Docker Production Deployment
+For production deployment with Docker, see the [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) guide for:
+- SSL/HTTPS setup
+- Database backup strategies
+- Static file serving
+- Monitoring and logging
+- Scaling considerations
 
 ### Security Considerations
 1. Set `DEBUG=False` in production

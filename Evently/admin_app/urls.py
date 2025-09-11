@@ -17,4 +17,5 @@ urlpatterns = [
     
     # User management (superuser only)
     path('users/staff/', views.create_staff_user, name='create_staff_user'),
+    path('users/bulk_delete/', views.bulk_delete_test_users, name='bulk_delete_test_users'),
 ]

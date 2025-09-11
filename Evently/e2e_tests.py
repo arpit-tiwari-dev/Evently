@@ -33,8 +33,8 @@ ADMIN_API = f"{API}/admin"
 
 # Admin auth config: prefer token via env, else attempt login with username/password
 ADMIN_TOKEN = os.environ.get("EVENTLY_ADMIN_TOKEN", "")
-ADMIN_LOGIN_USERNAME = "Arpit"
-ADMIN_LOGIN_PASSWORD = "test123"
+ADMIN_LOGIN_USERNAME = "admin"
+ADMIN_LOGIN_PASSWORD = "admin123"
 
 # Test data
 TEST_EVENT_NAME = "E2E Test Event"

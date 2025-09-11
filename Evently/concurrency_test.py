@@ -35,8 +35,8 @@ USER_API = f"{API}/user"
 ADMIN_API = f"{API}/admin"
 
 ADMIN_TOKEN = os.environ.get("EVENTLY_ADMIN_TOKEN", "")
-ADMIN_LOGIN_USERNAME = "Arpit"
-ADMIN_LOGIN_PASSWORD = "test123"
+ADMIN_LOGIN_USERNAME = "admin"
+ADMIN_LOGIN_PASSWORD = "admin123"
 
 NUM_USERS = int(os.environ.get("CT_USERS", "20"))
 TICKETS_PER_USER = int(os.environ.get("CT_TICKETS_PER_USER", "1"))

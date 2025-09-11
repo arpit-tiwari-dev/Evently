@@ -395,3 +395,23 @@ def create_staff_user(request):
             'is_staff': user.is_staff
         }, status=status.HTTP_201_CREATED)
     return Response({'error': 'Invalid data', 'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def bulk_delete_test_users(request):
+    """Admin-only endpoint to bulk delete test users by username prefix.
+    POST /api/admin/users/bulk_delete/
+    Body: { "prefix": "ht_" }
+    Safeguards: excludes staff and superusers.
+    """
+    prefix = request.data.get('prefix', 'ht_')
+    try:
+        qs = User.objects.filter(username__startswith=prefix, is_staff=False, is_superuser=False)
+        count = qs.count()
+        qs.delete()
+        logger.info(f"Bulk deleted {count} users with prefix '{prefix}' by {request.user.username}")
+        return Response({"deleted_users": count, "prefix": prefix}, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error bulk deleting users with prefix '{prefix}': {e}")
+        return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

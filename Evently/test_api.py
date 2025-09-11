@@ -10,7 +10,7 @@ from datetime import datetime
 
 # Configuration
 BASE_URL = "http://localhost:8000/api"
-AUTH_TOKEN = "edf623e616c6c9e061c18da2f01c1da58df3a737"  # From create_test_data.py
+AUTH_TOKEN = "94873eab2992152df8dfe9c2d686606561463fbc"  # From create_test_data.py
 
 # Test data IDs - from create_test_data.py
 TEST_USER_ID = "1"

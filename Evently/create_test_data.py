@@ -7,7 +7,8 @@ Run this after starting the Django server
 import os
 import sys
 import django
-from datetime import date, time
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 # Setup Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Evently.settings')
@@ -52,14 +53,13 @@ def create_test_data():
     except Event.DoesNotExist:
         event = Event.objects.create(
             name="Test Concert",
-            available_tickets=50,
-            organizer="Test Organizer",
+            capacity=50,
+            organizer=user,  # Use the user as organizer
             description="A test concert for API testing",
-            date=date(2024, 12, 31),
-            time=time(20, 0),
-            location="Test Venue",
+            time=timezone.now() + timedelta(days=30),  # 30 days from now
+            venue="Test Venue",
             price_per_ticket=25.00,
-            open_for_booking=True
+            is_active=True
         )
         print(f"✅ Created test event: {event.name} (ID: {event.id})")
     
@@ -70,14 +70,13 @@ def create_test_data():
     except Event.DoesNotExist:
         event2 = Event.objects.create(
             name="Test Festival",
-            available_tickets=100,
-            organizer="Festival Organizer",
+            capacity=100,
+            organizer=user,  # Use the user as organizer
             description="A test festival for API testing",
-            date=date(2024, 6, 15),
-            time=time(18, 0),
-            location="Festival Grounds",
+            time=timezone.now() + timedelta(days=60),  # 60 days from now
+            venue="Festival Grounds",
             price_per_ticket=50.00,
-            open_for_booking=True
+            is_active=True
         )
         print(f"✅ Created test festival: {event2.name} (ID: {event2.id})")
     
