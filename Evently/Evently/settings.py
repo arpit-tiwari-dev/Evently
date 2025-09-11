@@ -80,14 +80,37 @@ WSGI_APPLICATION = 'Evently.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+def _env(key: str, default: str | None = None) -> str | None:
+    value = os.getenv(key)
+    if value is not None and value != "":
+        return value
+    try:
+        return config(key, default=default)
+    except Exception:
+        return default
+
+
+# Prefer explicit DB_* vars; fall back to common Railway/Postgres names
+_DB_NAME = _env('DB_NAME') or _env('POSTGRES_DB', 'evently_db')
+_DB_USER = _env('DB_USER') or _env('POSTGRES_USER', 'postgres')
+_DB_PASSWORD = _env('DB_PASSWORD') or _env('POSTGRES_PASSWORD', 'postgres')
+_DB_HOST = _env('DB_HOST') or _env('PGHOST') or _env('POSTGRES_HOST') or 'localhost'
+_DB_PORT = _env('DB_PORT') or _env('PGPORT') or _env('POSTGRES_PORT') or '5432'
+
+_DB_OPTIONS: dict[str, str] = {}
+_ssl_flag = (_env('DB_SSL_REQUIRE', '') or '').lower()
+if _ssl_flag in ('1', 'true', 'yes', 'on'):
+    _DB_OPTIONS['sslmode'] = 'require'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='evently_db'),
-        'USER': config('DB_USER', default='postgres'),
-        'PASSWORD': config('DB_PASSWORD', default='postgres'),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
+        'NAME': _DB_NAME,
+        'USER': _DB_USER,
+        'PASSWORD': _DB_PASSWORD,
+        'HOST': _DB_HOST,
+        'PORT': _DB_PORT,
+        'OPTIONS': _DB_OPTIONS,
     }
 }
 
