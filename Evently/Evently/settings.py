@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-(0-rd@tebtwe*dn2e9@&aa05&g%5jr-(=p+!0zs0-afwuo42v$')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = False
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,evently-production-e33e.up.railway.app', cast=lambda v: [s.strip() for s in v.split(',')])
 
