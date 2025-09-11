@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from decouple import config
+import dj_database_url
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -103,15 +105,7 @@ if _ssl_flag in ('1', 'true', 'yes', 'on'):
     _DB_OPTIONS['sslmode'] = 'require'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': _DB_NAME,
-        'USER': _DB_USER,
-        'PASSWORD': _DB_PASSWORD,
-        'HOST': _DB_HOST,
-        'PORT': _DB_PORT,
-        'OPTIONS': _DB_OPTIONS,
-    }
+    'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
 }
 
 
