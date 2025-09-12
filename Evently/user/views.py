@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 import logging
+from utils.cache_utils import cache_response, cache_class_method
 
 from admin_app.models import Event
 from .serializers import (
@@ -38,6 +39,10 @@ class EventListView(generics.ListAPIView):
     search_fields = ['name', 'venue', 'description']
     ordering_fields = ['time', 'created_at', 'price_per_ticket']
     ordering = ['time']  # Default to chronological order
+    
+    @cache_class_method(key_prefix='evently:user:events:list')
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
     
     def get_queryset(self):
         queryset = Event.objects.filter(is_active=True)
@@ -81,6 +86,7 @@ class EventListView(generics.ListAPIView):
 
 @api_view(['GET'])
 @permission_classes([])  # No authentication required
+@cache_response(key_prefix='evently:user:events:detail')
 def get_event_details(request, event_id):
     """
     View Event Details API
@@ -152,6 +158,7 @@ def logout(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+@cache_response(key_prefix='evently:user:profile')
 def me(request):
     """Return current authenticated user's profile.
     GET /api/user/auth/me

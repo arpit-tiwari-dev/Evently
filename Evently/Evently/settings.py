@@ -27,6 +27,7 @@ env = environ.Env(
     DB_PASSWORD=(str, 'password'),
     DB_HOST=(str, 'localhost'),
     DB_PORT=(str, '5432'),
+    REDIS_URL=(str, 'redis://localhost:6379/0'),
 )
 
 # Read .env file
@@ -151,6 +152,15 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": env('REDIS_URL'),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 

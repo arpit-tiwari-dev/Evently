@@ -32,7 +32,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 
 
-BASE_URL = os.environ.get("EVENTLY_BASE_URL", "http://localhost:8000")
+BASE_URL = os.environ.get("EVENTLY_BASE_URL", "https://evently-mu3y.onrender.com/")
 API = f"{BASE_URL}/api"
 USER_API = f"{API}/user"
 ADMIN_API = f"{API}/admin"
@@ -41,8 +41,8 @@ ADMIN_TOKEN = os.environ.get("EVENTLY_ADMIN_TOKEN", "")
 ADMIN_LOGIN_USERNAME = os.environ.get("EVENTLY_ADMIN_USERNAME", "admin")
 ADMIN_LOGIN_PASSWORD = os.environ.get("EVENTLY_ADMIN_PASSWORD", "admin123")
 
-NUM_EVENTS = int(os.environ.get("HT_EVENTS", "10"))
-NUM_USERS = int(os.environ.get("HT_USERS", "200"))
+NUM_EVENTS = int(os.environ.get("HT_EVENTS", "1"))
+NUM_USERS = int(os.environ.get("HT_USERS", "50"))
 TICKETS_PER_USER = int(os.environ.get("HT_TICKETS_PER_USER", "1"))
 MAX_WORKERS = int(os.environ.get("HT_CONCURRENCY", str(min(20, NUM_USERS))))
 PRICE_CENTS = int(os.environ.get("HT_PRICE_CENTS", "500"))

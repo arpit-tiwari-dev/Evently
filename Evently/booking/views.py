@@ -16,6 +16,7 @@ from .serializers import (
 )
 from admin_app.models import Event
 from django.contrib.auth import get_user_model
+from utils.cache_utils import cache_response
 
 User = get_user_model()
 import logging
@@ -152,6 +153,7 @@ def cancel_booking(request, booking_id):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+@cache_response(key_prefix='evently:bookings:user')
 def get_user_bookings(request, user_id):
     """
     Booking History API
@@ -189,6 +191,7 @@ def get_user_bookings(request, user_id):
 
 @api_view(['GET'])
 @permission_classes([])  # No authentication required
+@cache_response(key_prefix='evently:events:availability')
 def check_availability(request, event_id):
     """
     Check Availability API

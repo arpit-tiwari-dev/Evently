@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from datetime import datetime, timedelta
 import logging
+from utils.cache_utils import cache_response, cache_class_method
 
 from .models import Event
 from .serializers import (
@@ -181,6 +182,10 @@ class EventListView(generics.ListAPIView):
     ordering_fields = ['time', 'created_at', 'capacity']
     ordering = ['-created_at']
     
+    @cache_class_method(key_prefix='evently:admin:events:list')
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
     def get_queryset(self):
         queryset = Event.objects.all()
         
@@ -206,6 +211,7 @@ class EventListView(generics.ListAPIView):
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
+@cache_response(key_prefix='evently:admin:events:detail')
 def get_event_details(request, event_id):
     """
     View Event Details API
@@ -227,6 +233,7 @@ def get_event_details(request, event_id):
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
+@cache_response(key_prefix='evently:admin:analytics')
 def get_analytics(request):
     """
     View Booking Analytics API
@@ -280,6 +287,7 @@ def get_analytics(request):
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
+@cache_response(key_prefix='evently:admin:analytics:event')
 def get_event_analytics(request, event_id):
     """
     Advanced Analytics for Specific Event API

@@ -26,7 +26,7 @@ from typing import Optional, Dict, Any
 
 import requests
 
-BASE_URL = "http://127.0.0.1:8000/"
+BASE_URL = "https://evently-mu3y.onrender.com/"
 API = f"{BASE_URL}/api"
 USER_API = f"{API}/user"
 ADMIN_API = f"{API}/admin"
