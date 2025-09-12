@@ -20,6 +20,6 @@ python manage.py migrate
 echo "Setup complete! Starting application..."
 
 # Start the application
-python manage.py runserver
-
+PORT=${PORT:-8000}
+exec gunicorn Evently.wsgi:application --bind 0.0.0.0:$PORT --workers ${WEB_CONCURRENCY:-3}
 echo "Application started!"
