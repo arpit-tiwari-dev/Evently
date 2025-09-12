@@ -1,25 +1,83 @@
+# Virtual Environment
 myenv/
+venv/
+ENV/
+env/
+.venv/
+
+# Database files
 Evently/db.sqlite3
 Evently/booking.log
+*.sqlite3
+*.db
 
+# Environment files (CRITICAL - Never commit these!)
+.env
+.env.*
+!.env.example
 Evently/.env
+Evently/.env.*
+!Evently/.env.example
 
 # Python cache files
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
 # Django specific
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+media/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
 # Docker
 .dockerignore
 docker-compose.override.yml
 
-# Environment files
-.env
-.env.local
-.env.production
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
