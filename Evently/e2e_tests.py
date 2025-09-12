@@ -26,7 +26,7 @@ from typing import Optional, Dict, Any
 
 import requests
 
-BASE_URL = os.environ.get("EVENTLY_BASE_URL", "https://evently-production-e33e.up.railway.app")
+BASE_URL = "http://127.0.0.1:8000/"
 API = f"{BASE_URL}/api"
 USER_API = f"{API}/user"
 ADMIN_API = f"{API}/admin"

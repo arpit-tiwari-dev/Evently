@@ -12,9 +12,25 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
-from decouple import config
+import environ
 import dj_database_url
 
+# Initialize environ
+env = environ.Env(
+    # Set casting and default values
+    DEBUG=(bool, False),
+    SECRET_KEY=(str, 'django-insecure-(0-rd@tebtwe*dn2e9@&aa05&g%5jr-(=p+!0zs0-afwuo42v$'),
+    ALLOWED_HOSTS=(list, ['localhost', '127.0.0.1']),
+    DB_CONN_MAX_AGE=(int, 0),
+    DB_NAME=(str, 'evently_db'),
+    DB_USER=(str, 'postgres'),
+    DB_PASSWORD=(str, 'password'),
+    DB_HOST=(str, 'localhost'),
+    DB_PORT=(str, '5432'),
+)
+
+# Read .env file
+environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,12 +40,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-(0-rd@tebtwe*dn2e9@&aa05&g%5jr-(=p+!0zs0-afwuo42v$')
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,evently-production-e33e.up.railway.app', cast=lambda v: [s.strip() for s in v.split(',')])
+ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
 
 # Application definition
@@ -82,31 +98,38 @@ WSGI_APPLICATION = 'Evently.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-def _env(key: str, default: str | None = None) -> str | None:
-    value = os.getenv(key)
-    if value is not None and value != "":
-        return value
-    try:
-        return config(key, default=default)
-    except Exception:
-        return default
+# Database configuration
+# Use DATABASE_URL if available, otherwise use individual environment variables
+DATABASE_URL = env('DATABASE_URL', default=None)
 
-
-# Prefer explicit DB_* vars; fall back to common Railway/Postgres names
-_DB_NAME = _env('DB_NAME') or _env('POSTGRES_DB', 'evently_db')
-_DB_USER = _env('DB_USER') or _env('POSTGRES_USER', 'postgres')
-_DB_PASSWORD = _env('DB_PASSWORD') or _env('POSTGRES_PASSWORD', 'postgres')
-_DB_HOST = _env('DB_HOST') or _env('PGHOST') or _env('POSTGRES_HOST') or 'localhost'
-_DB_PORT = _env('DB_PORT') or _env('PGPORT') or _env('POSTGRES_PORT') or '5432'
-
-_DB_OPTIONS: dict[str, str] = {}
-_ssl_flag = (_env('DB_SSL_REQUIRE', '') or '').lower()
-if _ssl_flag in ('1', 'true', 'yes', 'on'):
-    _DB_OPTIONS['sslmode'] = 'require'
-
-DATABASES = {
-    'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
-}
+if DATABASE_URL:
+    # Use dj_database_url to parse the DATABASE_URL
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL)
+    }
+else:
+    # Fallback to individual environment variables or SQLite
+    if env('DB_HOST', default=None):
+        # Use PostgreSQL with individual environment variables
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'CONN_MAX_AGE': env('DB_CONN_MAX_AGE'),
+                'NAME': env('DB_NAME'),
+                'USER': env('DB_USER'),
+                'PASSWORD': env('DB_PASSWORD'),
+                'HOST': env('DB_HOST'),
+                'PORT': env('DB_PORT'),
+            }
+        }
+    else:
+        # Use SQLite for local development
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 
 
 # Password validation
