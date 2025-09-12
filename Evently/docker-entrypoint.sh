@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Exit on any error
-set -e
 
 echo "Starting Evently application setup..."
 
@@ -20,5 +19,7 @@ python manage.py migrate
 
 echo "Setup complete! Starting application..."
 
-# Execute the main command
-exec "$@"
+# Start the application
+python manage.py runserver
+
+echo "Application started!"
