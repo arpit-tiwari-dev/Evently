@@ -23,6 +23,19 @@ class Event(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            # Most critical indexes for performance
+            models.Index(fields=['is_active', 'time'], name='event_active_time_idx'),
+            models.Index(fields=['time'], name='event_time_idx'),
+            models.Index(fields=['is_active'], name='event_active_idx'),
+            models.Index(fields=['venue'], name='event_venue_idx'),
+            models.Index(fields=['price_per_ticket'], name='event_price_idx'),
+            models.Index(fields=['created_at'], name='event_created_idx'),
+            models.Index(fields=['organizer'], name='event_organizer_idx'),
+            # Composite indexes for common query patterns
+            models.Index(fields=['is_active', 'time', 'created_at'], name='event_composite_idx'),
+            models.Index(fields=['is_active', 'venue'], name='event_active_venue_idx'),
+        ]
 
     def __str__(self):
         return f"{self.name} - {self.venue}"
