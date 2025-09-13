@@ -43,6 +43,10 @@ def process_booking_task(booking_id):
                 
                 logger.info(f"💾 Booking {booking_id} status updated to 'failed'")
                 
+                # Invalidate availability cache
+                from .concurrency_utils import EventAvailabilityManager
+                EventAvailabilityManager.invalidate_event_cache(str(booking.event.id))
+                
                 # Send failure email
                 logger.info(f"📧 Queuing failure email for booking {booking_id}")
                 send_booking_email.delay(booking_id, 'failed')
@@ -55,6 +59,10 @@ def process_booking_task(booking_id):
             booking.save(update_fields=['status'])
             
             logger.info(f"💾 Booking {booking_id} status updated to 'confirmed'")
+            
+            # Invalidate availability cache
+            from .concurrency_utils import EventAvailabilityManager
+            EventAvailabilityManager.invalidate_event_cache(str(booking.event.id))
             
             # Send success email
             logger.info(f"📧 Queuing success email for booking {booking_id}")

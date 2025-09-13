@@ -40,6 +40,16 @@ Evently/
 └── Evently/           # Main Django project configuration
 ```
 
+## Design Decision
+### Postgres
+- Used Postgresql here because we need a consistent and reliable way to store the data.
+### Redis
+- Redis is easy choice because it can be used for caching and message broker both booking and notification.
+### Celery
+- Celery is used in the project to asynchronously process the notification and booking.
+### Django
+- I used Django in the project because its very fast to build in django and  built in authentication system are among the many reason why I use it.
+
 ## 🚀 Quick Start
 
 ### Prerequisites

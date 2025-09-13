@@ -88,7 +88,10 @@ class BookingHistorySerializer(serializers.ModelSerializer):
 
 class AvailabilitySerializer(serializers.Serializer):
     """
-    Serializer for event availability
+    Serializer for event availability with real-time data
     """
     event_id = serializers.CharField()
     available_tickets = serializers.IntegerField()
+    total_capacity = serializers.IntegerField()
+    confirmed_bookings = serializers.IntegerField()
+    cached = serializers.BooleanField(default=False)

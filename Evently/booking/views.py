@@ -104,7 +104,7 @@ def health_check(request):
 @permission_classes([IsAuthenticated])
 def create_booking(request):
     """
-    Book Ticket API - Asynchronous Processing
+    Book Ticket API - Asynchronous Processing with Concurrency Control
     Endpoint: POST /bookings
     """
     serializer = CreateBookingSerializer(data=request.data)
@@ -120,23 +120,48 @@ def create_booking(request):
     event_id = validated_data['event_id']
     number_of_tickets = validated_data['number_of_tickets']
     
+    # Import concurrency utilities
+    from .concurrency_utils import BookingConcurrencyManager
+    
     try:
-        with transaction.atomic():
-            # Get event and user (basic validation)
-            event = Event.objects.get(id=event_id)
-            user = User.objects.get(id=user_id)
-            
-            # Calculate total amount
-            total_amount = event.price_per_ticket * number_of_tickets
-            
-            # Create booking with 'processing' status
-            booking = Booking.objects.create(
-                event=event,
-                user=user,
-                ticket_count=number_of_tickets,
-                total_amount=total_amount,
-                status='processing'
+        # Rate limiting check
+        if not BookingConcurrencyManager.check_user_booking_rate_limit(user_id):
+            return Response(
+                {'error': 'Too many booking requests. Please wait a moment and try again.'},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
             )
+        
+        # Acquire booking lock to prevent duplicate requests
+        if not BookingConcurrencyManager.acquire_booking_lock(event_id, user_id):
+            return Response(
+                {'error': 'You already have a booking request in progress for this event. Please wait for it to complete.'},
+                status=status.HTTP_409_CONFLICT
+            )
+        
+        try:
+            # Reserve tickets atomically
+            success, message = BookingConcurrencyManager.reserve_tickets_atomic(
+                event_id, user_id, number_of_tickets
+            )
+            
+            if not success:
+                return Response(
+                    {'error': message},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get the created booking
+            booking = Booking.objects.filter(
+                event_id=event_id, 
+                user_id=user_id, 
+                status='processing'
+            ).order_by('-booking_date').first()
+            
+            if not booking:
+                return Response(
+                    {'error': 'Failed to create booking'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
             
             # Queue the booking processing task
             logger.info(f"🚀 QUEUING TASK: About to queue booking {booking.id} for async processing")
@@ -147,18 +172,16 @@ def create_booking(request):
             booking.save(update_fields=['task_id'])
             
             logger.info(f"✅ TASK QUEUED SUCCESSFULLY: Booking {booking.id} queued with task ID {task.id}")
-            logger.info(f"📊 Task details - Task ID: {task.id}, Booking ID: {booking.id}, Event: {event.name}, Tickets: {number_of_tickets}")
+            logger.info(f"📊 Task details - Task ID: {task.id}, Booking ID: {booking.id}, Event: {event_id}, Tickets: {number_of_tickets}")
             
             # Return immediate response with processing status
             booking_serializer = BookingSerializer(booking)
             return Response(booking_serializer.data, status=status.HTTP_201_CREATED)
             
-    except ObjectDoesNotExist as e:
-        logger.error(f"Object not found during booking: {str(e)}")
-        return Response(
-            {'error': 'Event or user not found'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        finally:
+            # Always release the booking lock
+            BookingConcurrencyManager.release_booking_lock(event_id, user_id)
+            
     except Exception as e:
         logger.error(f"Unexpected error during booking: {str(e)}")
         return Response(
@@ -254,31 +277,37 @@ def get_user_bookings(request, user_id):
 
 @api_view(['GET'])
 @permission_classes([])  # No authentication required
-@cache_response(key_prefix='evently:events:availability')
 def check_availability(request, event_id):
     """
-    Check Availability API
+    Check Availability API with Real-time Data
     Endpoint: GET /events/{event_id}/availability
     """
     try:
-        event = Event.objects.get(id=event_id)
+        from .concurrency_utils import EventAvailabilityManager
+        
+        # Get real-time availability with caching
+        availability_data = EventAvailabilityManager.get_real_time_availability(event_id)
         
         serializer = AvailabilitySerializer({
-            'event_id': str(event.id),
-            'available_tickets': event.available_tickets
+            'event_id': str(event_id),
+            'available_tickets': availability_data['available_tickets'],
+            'total_capacity': availability_data['total_capacity'],
+            'confirmed_bookings': availability_data['confirmed_bookings'],
+            'cached': availability_data['cached']
         })
         
         return Response(serializer.data, status=status.HTTP_200_OK)
         
-    except Event.DoesNotExist:
-        logger.warning(f"Event not found: {event_id}")
-        return Response(
-            {'error': 'Event not found'},
-            status=status.HTTP_404_NOT_FOUND
-        )
     except Exception as e:
-        logger.error(f"Unexpected error checking availability: {str(e)}")
-        return Response(
-            {'error': 'Internal server error'},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        if 'Event not found' in str(e):
+            logger.warning(f"Event not found: {event_id}")
+            return Response(
+                {'error': 'Event not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        else:
+            logger.error(f"Unexpected error checking availability: {str(e)}")
+            return Response(
+                {'error': 'Internal server error'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
