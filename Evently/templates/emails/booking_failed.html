@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Booking Failed</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f44336; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background-color: #f9f9f9; }
+        .booking-details { background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #f44336; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>❌ Booking Failed</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{ user_name }},</p>
+            
+            <p>We're sorry to inform you that your booking could not be processed.</p>
+            
+            <div class="booking-details">
+                <h3>Booking Details</h3>
+                <p><strong>Event:</strong> {{ event_name }}</p>
+                <p><strong>Venue:</strong> {{ event_venue }}</p>
+                <p><strong>Date & Time:</strong> {{ event_time }}</p>
+                <p><strong>Requested Tickets:</strong> {{ ticket_count }}</p>
+                <p><strong>Booking ID:</strong> {{ booking_id }}</p>
+            </div>
+            
+            <p><strong>Reason:</strong> The event may be sold out or there was an issue processing your request.</p>
+            
+            <p>Please try booking again or contact our support team if you continue to experience issues.</p>
+            
+            <p>We apologize for any inconvenience.</p>
+            
+            <p>Best regards,<br>The Evently Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -14,6 +14,7 @@ from .serializers import (
     BookingHistorySerializer,
     AvailabilitySerializer
 )
+from .tasks import process_booking_task
 from admin_app.models import Event
 from django.contrib.auth import get_user_model
 from utils.cache_utils import cache_response
@@ -38,7 +39,7 @@ class BookingPagination(PageNumberPagination):
 @permission_classes([IsAuthenticated])
 def create_booking(request):
     """
-    Book Ticket API
+    Book Ticket API - Asynchronous Processing
     Endpoint: POST /bookings
     """
     serializer = CreateBookingSerializer(data=request.data)
@@ -56,37 +57,32 @@ def create_booking(request):
     
     try:
         with transaction.atomic():
-            # Use select_for_update to prevent race conditions
-            event = Event.objects.select_for_update().get(id=event_id)
+            # Get event and user (basic validation)
+            event = Event.objects.get(id=event_id)
             user = User.objects.get(id=user_id)
-            
-            # Double-check capacity with pessimistic locking
-            if event.available_tickets < number_of_tickets:
-                logger.warning(f"Booking failed: insufficient tickets for event {event_id}")
-                return Response(
-                    {
-                        'error': 'Insufficient tickets',
-                        'available_tickets': event.available_tickets,
-                        'requested_tickets': number_of_tickets
-                    },
-                    status=status.HTTP_409_CONFLICT
-                )
             
             # Calculate total amount
             total_amount = event.price_per_ticket * number_of_tickets
             
-            # Create booking; availability is computed from bookings, so no direct event update is needed
+            # Create booking with 'processing' status
             booking = Booking.objects.create(
                 event=event,
                 user=user,
                 ticket_count=number_of_tickets,
                 total_amount=total_amount,
-                status='confirmed'
+                status='processing'
             )
             
-            logger.info(f"Booking created successfully: {booking.id} for event {event_id}")
+            # Queue the booking processing task
+            task = process_booking_task.delay(booking.id)
             
-            # Return booking details
+            # Store the task ID in the booking
+            booking.task_id = task.id
+            booking.save(update_fields=['task_id'])
+            
+            logger.info(f"Booking {booking.id} queued for processing with task {task.id}")
+            
+            # Return immediate response with processing status
             booking_serializer = BookingSerializer(booking)
             return Response(booking_serializer.data, status=status.HTTP_201_CREATED)
             

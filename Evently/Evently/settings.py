@@ -81,7 +81,7 @@ ROOT_URLCONF = 'Evently.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -204,6 +204,41 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.JSONParser',
     ],
 }
+
+# Celery Configuration
+redis_url = env('REDIS_URL')
+
+# Handle SSL Redis URLs for Celery
+if redis_url.startswith('rediss://'):
+    # Add SSL parameters for Celery compatibility
+    redis_url = redis_url + '?ssl_cert_reqs=CERT_NONE'
+
+CELERY_BROKER_URL = redis_url
+CELERY_RESULT_BACKEND = redis_url
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# Redis SSL Configuration for Celery
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_BROKER_CONNECTION_RETRY = True
+CELERY_BROKER_CONNECTION_MAX_RETRIES = 10
+
+# Windows-specific configuration
+import sys
+if sys.platform.startswith('win'):
+    CELERY_WORKER_CONCURRENCY = 1
+    CELERY_WORKER_POOL = 'solo'
+
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = env('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env('EMAIL_USE_TLS', default=True)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@evently.com')
 
 # Logging Configuration
 LOGGING = {

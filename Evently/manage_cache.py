@@ -20,6 +20,7 @@ import django
 import time
 import json
 import argparse
+import requests
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.core.cache import cache
@@ -58,10 +59,12 @@ logger = logging.getLogger(__name__)
 class CacheManager:
     """Cache management utilities"""
     
-    def __init__(self):
+    def __init__(self, base_url=None):
         self.factory = RequestFactory()
         self.client = Client()
         self.User = get_user_model()
+        self.base_url = base_url or 'https://evently-mu3y.onrender.com/'
+        self.use_external = base_url is not None
     
     def test_cache_functionality(self):
         """Test basic cache functionality"""
@@ -126,11 +129,13 @@ class CacheManager:
     def test_api_caching(self):
         """Test API endpoint caching"""
         print("\n🌐 Testing API Endpoint Caching")
+        print(f"Target Server: {self.base_url}")
         print("=" * 50)
         
         try:
-            # Create test data if needed
-            self._create_test_data()
+            # Create test data if needed (only for local testing)
+            if not self.use_external:
+                self._create_test_data()
             
             # Test endpoints that should be cached
             endpoints_to_test = [
@@ -154,7 +159,7 @@ class CacheManager:
                 
                 # First request (should miss cache)
                 start_time = time.time()
-                response1 = self.client.get(endpoint['url'], endpoint.get('params', {}))
+                response1 = self._make_request(endpoint['url'], endpoint.get('params', {}))
                 first_request_time = time.time() - start_time
                 
                 if response1.status_code == 200:
@@ -162,7 +167,7 @@ class CacheManager:
                     
                     # Second request (should hit cache)
                     start_time = time.time()
-                    response2 = self.client.get(endpoint['url'], endpoint.get('params', {}))
+                    response2 = self._make_request(endpoint['url'], endpoint.get('params', {}))
                     second_request_time = time.time() - start_time
                     
                     if response2.status_code == 200:
@@ -184,6 +189,17 @@ class CacheManager:
         except Exception as e:
             print(f"❌ API caching test failed: {e}")
             return False
+    
+    def _make_request(self, url, params=None):
+        """Make HTTP request to external server or use Django test client"""
+        if self.use_external:
+            # Make real HTTP request to external server
+            full_url = f"{self.base_url}{url}"
+            response = requests.get(full_url, params=params, timeout=30)
+            return response
+        else:
+            # Use Django test client for local testing
+            return self.client.get(url, params or {})
     
     def monitor_cache_performance(self, duration=60):
         """Monitor cache performance for specified duration"""
@@ -315,11 +331,13 @@ class CacheManager:
     def warm_cache(self):
         """Warm up cache with common requests"""
         print("🔥 Warming Up Cache")
+        print(f"Target Server: {self.base_url}")
         print("=" * 50)
         
         try:
-            # Create test data if needed
-            self._create_test_data()
+            # Create test data if needed (only for local testing)
+            if not self.use_external:
+                self._create_test_data()
             
             # Common requests to warm up
             warm_up_requests = [
@@ -330,7 +348,7 @@ class CacheManager:
             
             for request in warm_up_requests:
                 print(f"Warming up: {request['name']}...")
-                response = self.client.get(request['url'], request.get('params', {}))
+                response = self._make_request(request['url'], request.get('params', {}))
                 
                 if response.status_code == 200:
                     print(f"   ✅ {request['name']} cached")
@@ -428,12 +446,17 @@ def main():
     ], help='Command to execute')
     parser.add_argument('--pattern', help='Cache pattern for clear command')
     parser.add_argument('--duration', type=int, default=60, help='Monitoring duration in seconds')
+    parser.add_argument('--url', help='External server URL (e.g., https://api.example.com)')
     
     args = parser.parse_args()
     
-    cache_manager = CacheManager()
+    cache_manager = CacheManager(base_url=args.url)
     
     print("🚀 Evently Cache Management Script")
+    if args.url:
+        print(f"🌐 External Server: {args.url}")
+    else:
+        print("🏠 Local Server: http://localhost:8000")
     print("=" * 50)
     
     success = False
