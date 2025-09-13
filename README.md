@@ -16,22 +16,21 @@ Evently is a comprehensive Django-based event booking system that allows users t
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                              EVENTLY ARCHITECTURE                              │
+│                              EVENTLY ARCHITECTURE                               │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   CLIENT LAYER  │    │   LOAD BALANCER │    │   API GATEWAY   │    │   MONITORING    │
-│                 │    │                 │    │                 │    │                 │
-│ • Web Browser   │    │ • Nginx/AWS ALB │    │ • Rate Limiting │    │ • Health Checks │
-│ • Mobile App    │◄──►│ • SSL Terminal  │    │ • Authentication│    │ • Performance   │
-│ • API Clients   │    │ • Load Dist.    │    │ • Request Log   │    │ • Error Tracking│
-└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │                       │
-         └───────────────────────┼───────────────────────┼───────────────────────┘
-                                 │                       │
-                                 ▼                       ▼
+                                ┌─────────────────┐    
+                                │   CLIENT LAYER  │    
+                                │                 │    
+                                │ • Web Browser   │    
+                                │ • Mobile App    │
+                                │ • API Clients   │
+                                └─────────────────┘
+                                        |
+                                        │
+                                        ▼              
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                              DJANGO APPLICATION LAYER                          │
+│                              DJANGO APPLICATION LAYER                           │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -47,7 +46,7 @@ Evently is a comprehensive Django-based event booking system that allows users t
                                  │                       │
                                  ▼                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                              CORE DJANGO FRAMEWORK                             │
+│                              CORE DJANGO FRAMEWORK                              │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -63,7 +62,7 @@ Evently is a comprehensive Django-based event booking system that allows users t
                                  │                       │
                                  ▼                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                            CONCURRENCY & CACHING LAYER                         │
+│                            CONCURRENCY & CACHING LAYER                          │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -72,7 +71,7 @@ Evently is a comprehensive Django-based event booking system that allows users t
 │                 │    │ • Redis Cache   │    │ • Booking Locks │    │ • User Limits   │
 │ • Atomic Ops    │◄──►│ • API Response  │    │ • Event Locks   │    │ • Request Thrott│
 │ • Row Locking   │    │ • Availability  │    │ • Cache Keys    │    │ • Abuse Prevent │
-│ • Race Prevention│    │ • Session Data  │    │ • TTL Mgmt      │    │ • Fair Access   │
+│ • Race Prevention│   │ • Session Data  │    │ • TTL Mgmt      │    │ • Fair Access   │
 │ • Data Integrity│    │ • Smart Inval.  │    │ • Auto Release  │    │ • System Protect│
 └─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │                       │
@@ -80,7 +79,7 @@ Evently is a comprehensive Django-based event booking system that allows users t
                                  │                       │
                                  ▼                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                              ASYNC PROCESSING LAYER                            │
+│                              ASYNC PROCESSING LAYER                             │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -96,7 +95,7 @@ Evently is a comprehensive Django-based event booking system that allows users t
                                  │                       │
                                  ▼                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                               DATA PERSISTENCE LAYER                           │
+│                               DATA PERSISTENCE LAYER                            │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
