@@ -12,20 +12,102 @@ Evently is a comprehensive Django-based event booking system that allows users t
 - **Authentication**: Token-based authentication
 - **Containerization**: Docker & Docker Compose
 
-### System Components
+### System Architecture
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Django Web    │    │   Redis Cache   │    │  PostgreSQL DB  │
-│     Server      │◄──►│   & Message     │◄──►│                 │
-│                 │    │     Broker      │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │
-         ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐
-│   Celery        │    │   Email         │
-│   Workers       │    │   Service       │
-└─────────────────┘    └─────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              EVENTLY ARCHITECTURE                              │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   CLIENT LAYER  │    │   LOAD BALANCER │    │   API GATEWAY   │    │   MONITORING    │
+│                 │    │                 │    │                 │    │                 │
+│ • Web Browser   │    │ • Nginx/AWS ALB │    │ • Rate Limiting │    │ • Health Checks │
+│ • Mobile App    │◄──►│ • SSL Terminal  │    │ • Authentication│    │ • Performance   │
+│ • API Clients   │    │ • Load Dist.    │    │ • Request Log   │    │ • Error Tracking│
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │                       │
+         └───────────────────────┼───────────────────────┼───────────────────────┘
+                                 │                       │
+                                 ▼                       ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              DJANGO APPLICATION LAYER                          │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   ADMIN APP     │    │   BOOKING APP   │    │   USER APP      │    │   UTILS MODULE  │
+│                 │    │                 │    │                 │    │                 │
+│ • Event CRUD    │    │ • Booking Mgmt  │    │ • Authentication│    │ • Cache Utils   │
+│ • Analytics     │    │ • Concurrency   │    │ • User Profile  │    │ • Signals       │
+│ • Notifications │    │ • Async Tasks   │    │ • Registration  │    │ • Decorators    │
+│ • Admin Views   │    │ • Email Sending │    │ • Token Auth    │    │ • Helpers       │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │                       │
+         └───────────────────────┼───────────────────────┼───────────────────────┘
+                                 │                       │
+                                 ▼                       ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              CORE DJANGO FRAMEWORK                             │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   DRF API       │    │   MIDDLEWARE    │    │   AUTH SYSTEM   │    │   URL ROUTING   │
+│                 │    │                 │    │                 │    │                 │
+│ • REST Endpoints│    │ • Security      │    │ • Token Auth    │    │ • URL Patterns  │
+│ • Serializers   │    │ • CORS          │    │ • Permissions   │    │ • View Mapping  │
+│ • ViewSets      │    │ • Logging       │    │ • User Models   │    │ • API Versioning│
+│ • Pagination    │    │ • Error Handling│    │ • Session Mgmt  │    │ • Namespaces    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │                       │
+         └───────────────────────┼───────────────────────┼───────────────────────┘
+                                 │                       │
+                                 ▼                       ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            CONCURRENCY & CACHING LAYER                         │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ CONCURRENCY     │    │   CACHE LAYER   │    │   LOCK SYSTEM   │    │   RATE LIMITING │
+│   MANAGER       │    │                 │    │                 │    │                 │
+│                 │    │ • Redis Cache   │    │ • Booking Locks │    │ • User Limits   │
+│ • Atomic Ops    │◄──►│ • API Response  │    │ • Event Locks   │    │ • Request Thrott│
+│ • Row Locking   │    │ • Availability  │    │ • Cache Keys    │    │ • Abuse Prevent │
+│ • Race Prevention│    │ • Session Data  │    │ • TTL Mgmt      │    │ • Fair Access   │
+│ • Data Integrity│    │ • Smart Inval.  │    │ • Auto Release  │    │ • System Protect│
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │                       │
+         └───────────────────────┼───────────────────────┼───────────────────────┘
+                                 │                       │
+                                 ▼                       ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              ASYNC PROCESSING LAYER                            │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   CELERY WORKER │    │   TASK QUEUE    │    │   EMAIL SERVICE │    │   NOTIFICATION  │
+│                 │    │                 │    │                 │    │     SYSTEM      │
+│ • Booking Tasks │    │ • Redis Broker  │    │ • SMTP Config   │    │                 │
+│ • Email Tasks   │    │ • Task Routing  │    │ • HTML Templates│    │ • Event Updates │
+│ • Processing    │    │ • Priority Mgmt │    │ • Async Sending │    │ • User Alerts   │
+│ • Error Handling│    │ • Retry Logic   │    │ • Delivery Track│    │ • Batch Process │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │                       │
+         └───────────────────────┼───────────────────────┼───────────────────────┘
+                                 │                       │
+                                 ▼                       ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                               DATA PERSISTENCE LAYER                           │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   POSTGRESQL    │    │   DATA MODELS   │    │   MIGRATIONS    │    │   INDEXES       │
+│   DATABASE      │    │                 │    │                 │    │                 │
+│                 │    │ • User Model    │    │ • Schema Changes│    │ • Performance   │
+│ • ACID Compliant│◄──►│ • Event Model   │    │ • Data Migrate  │    │ • Query Opt     │
+│ • Concurrent    │    │ • Booking Model │    │ • Rollback      │    │ • Composite Idx │
+│ • Reliable      │    │ • Relationships │    │ • Version Ctrl  │    │ • Availability  │
+│ • Scalable      │    │ • Constraints   │    │ • Dependencies  │    │ • Concurrent    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
 ### Application Structure
