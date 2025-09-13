@@ -163,14 +163,22 @@ def invalidate_event_cache(event_id=None):
     """
     patterns_to_invalidate = [
         'evently:events:list',
+        'evently:user:events:list',  # User event list API
+        'evently:admin:events:list',  # Admin event list API
         'evently:events:availability',
+        'evently:user:events:detail',  # User event detail API
+        'evently:admin:events:detail',  # Admin event detail API
         'evently:analytics',
+        'evently:admin:analytics',  # Admin analytics API
     ]
     
     if event_id:
         patterns_to_invalidate.extend([
             f'evently:events:detail:*{event_id}*',
+            f'evently:user:events:detail:*{event_id}*',  # User event detail with specific ID
+            f'evently:admin:events:detail:*{event_id}*',  # Admin event detail with specific ID
             f'evently:analytics:event:*{event_id}*',
+            f'evently:admin:analytics:event:*{event_id}*',  # Admin event analytics with specific ID
         ])
     
     for pattern in patterns_to_invalidate:
@@ -204,6 +212,7 @@ def invalidate_booking_cache():
         'evently:bookings:user',
         'evently:events:availability',
         'evently:analytics',
+        'evently:admin:analytics',  # Admin analytics API
     ]
     
     for pattern in patterns_to_invalidate:
