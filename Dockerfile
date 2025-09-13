@@ -21,11 +21,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY Evently/ /app/
 
-# Create entrypoint scripts
+# Create entrypoint script
 COPY Evently/docker-entrypoint.sh /app/
-COPY Evently/start.sh /app/
-COPY Evently/start_simple.sh /app/
-RUN chmod +x /app/docker-entrypoint.sh /app/start.sh /app/start_simple.sh
+RUN chmod +x /app/docker-entrypoint.sh
 
 # Create a non-root user
 RUN adduser --disabled-password --gecos '' appuser && \

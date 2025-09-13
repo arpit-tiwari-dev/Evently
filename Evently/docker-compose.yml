@@ -1,7 +1,7 @@
 services:
   web:
     build: .
-    command: /app/start_simple.sh
+    command: /app/docker-entrypoint.sh
     volumes:
       - .:/app
     ports:
