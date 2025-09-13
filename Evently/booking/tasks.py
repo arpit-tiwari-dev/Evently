@@ -144,3 +144,63 @@ def send_booking_email(booking_id, status):
     except Exception as e:
         logger.error(f"❌ EMAIL FAILED: Booking {booking_id} - {str(e)}", exc_info=True)
         return f"Email failed for booking {booking_id}: {str(e)}"
+
+
+@shared_task
+def send_event_notification_email(user_id, event_id, notification_message, custom_subject=None):
+    """
+    Send event notification email to a specific user
+    """
+    logger.info(f"📧 EVENT NOTIFICATION EMAIL TASK STARTED: User {user_id}, Event {event_id}")
+    
+    try:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        user = User.objects.get(id=user_id)
+        event = Event.objects.get(id=event_id)
+        
+        logger.info(f"📋 Email details - User: {user.email}, Event: {event.name}")
+        
+        # Get user's booking for this event
+        booking = Booking.objects.filter(event=event, user=user, status='confirmed').first()
+        ticket_count = booking.ticket_count if booking else 0
+        
+        # Email subject and template
+        if custom_subject:
+            subject = custom_subject
+        else:
+            subject = f"Event Update - {event.name}"
+        template = 'emails/event_notification.html'
+        
+        # Email context
+        context = {
+            'user_name': user.get_full_name() or user.username,
+            'event_name': event.name,
+            'event_venue': event.venue,
+            'event_time': event.time,
+            'ticket_count': ticket_count,
+            'notification_message': notification_message,
+        }
+        
+        logger.info(f"📝 Rendering email template: {template}")
+        # Render email content
+        html_content = render_to_string(template, context)
+        
+        logger.info(f"📤 Sending notification email to {user.email}")
+        # Send email
+        send_mail(
+            subject=subject,
+            message=f"Event Update for {event.name}: {notification_message}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            html_message=html_content,
+            fail_silently=False,
+        )
+        
+        logger.info(f"✅ EVENT NOTIFICATION EMAIL SENT SUCCESSFULLY: User {user_id}, Event {event_id}")
+        return f"Event notification email sent to user {user_id} for event {event_id}"
+        
+    except Exception as e:
+        logger.error(f"❌ EVENT NOTIFICATION EMAIL FAILED: User {user_id}, Event {event_id} - {str(e)}", exc_info=True)
+        return f"Event notification email failed for user {user_id}, event {event_id}: {str(e)}"

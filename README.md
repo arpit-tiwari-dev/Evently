@@ -330,7 +330,8 @@ Sends notifications to all users who booked the event.
 **Request Body:**
 ```json
 {
-    "message": "Event details have been updated. Please check the new information."
+    "message": "🚨 IMPORTANT: Event time changed to 7:00 PM. Please arrive 15 minutes early.",
+    "subject": "�� Time Change - Important Update"
 }
 ```
 
@@ -338,9 +339,11 @@ Sends notifications to all users who booked the event.
 ```json
 {
     "status": "success",
-    "message": "Notification sent to 150 users",
-    "event_id": "uuid-here",
-    "users_notified": 150
+    "message": "Notification emails queued for 25 users",
+    "event_id": "123",
+    "users_notified": 25,
+    "email_tasks_queued": ["task-id-1", "task-id-2"],
+    "users_without_email": 0
 }
 ```
 

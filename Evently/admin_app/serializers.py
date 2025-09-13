@@ -106,3 +106,4 @@ class EventAnalyticsSerializer(serializers.Serializer):
 class NotificationSerializer(serializers.Serializer):
     """Serializer for sending notifications"""
     message = serializers.CharField(max_length=1000)
+    subject = serializers.CharField(max_length=200, required=False, help_text="Optional custom subject for the notification email")

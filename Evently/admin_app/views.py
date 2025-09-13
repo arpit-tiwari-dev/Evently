@@ -356,20 +356,34 @@ def notify_users(request, event_id):
         
         if serializer.is_valid():
             message = serializer.validated_data['message']
+            custom_subject = serializer.validated_data.get('subject')
             
             # Get all users who have bookings for this event
             bookings = Booking.objects.filter(event=event, status='confirmed')
             users = set(booking.user for booking in bookings)
             
-            # Here you would typically integrate with your notification system
-            # For now, we'll just log the notification
-            logger.info(f"Notification sent for event {event_id}: '{message}' to {len(users)} users")
+            # Import the email task
+            from booking.tasks import send_event_notification_email
+            
+            # Queue email notifications for all users asynchronously
+            email_tasks = []
+            for user in users:
+                if user.email:  # Only send if user has email
+                    task = send_event_notification_email.delay(user.id, event.id, message, custom_subject)
+                    email_tasks.append(task.id)
+                    logger.info(f"📧 Queued notification email for user {user.id} ({user.email})")
+                else:
+                    logger.warning(f"⚠️ User {user.id} has no email address, skipping notification")
+            
+            logger.info(f"📧 EVENT NOTIFICATIONS QUEUED: Event {event_id}: '{message}' to {len(email_tasks)} users")
             
             response_data = {
                 'status': 'success',
-                'message': f'Notification sent to {len(users)} users',
+                'message': f'Notification emails queued for {len(email_tasks)} users',
                 'event_id': str(event.id),
-                'users_notified': len(users)
+                'users_notified': len(email_tasks),
+                'email_tasks_queued': email_tasks,
+                'users_without_email': len(users) - len(email_tasks)
             }
             
             return Response(response_data, status=status.HTTP_200_OK)
