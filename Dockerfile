@@ -11,6 +11,7 @@ WORKDIR /app
 # Install system dependencies for Celery
 RUN apt-get update && apt-get install -y \
     gcc \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -20,9 +21,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY Evently/ /app/
 
-# Create entrypoint script
+# Create entrypoint scripts
 COPY Evently/docker-entrypoint.sh /app/
-RUN chmod +x /app/docker-entrypoint.sh
+COPY Evently/start.sh /app/
+RUN chmod +x /app/docker-entrypoint.sh /app/start.sh
 
 # Create a non-root user
 RUN adduser --disabled-password --gecos '' appuser && \

@@ -35,6 +35,59 @@ class BookingPagination(PageNumberPagination):
     max_page_size = 100
 
 
+@api_view(['GET'])
+@permission_classes([])  # No authentication required
+def health_check(request):
+    """
+    Health check endpoint to verify Celery is working
+    """
+    try:
+        from celery import current_app
+        
+        # Check if Celery app is configured
+        app = current_app
+        broker_url = app.conf.broker_url
+        
+        # Try to inspect active workers
+        try:
+            inspect = app.control.inspect()
+            active_workers = inspect.active()
+            
+            if active_workers:
+                worker_count = len(active_workers)
+                return Response({
+                    'status': 'healthy',
+                    'celery': 'running',
+                    'workers': worker_count,
+                    'broker': broker_url,
+                    'message': f'Celery is running with {worker_count} worker(s)'
+                })
+            else:
+                return Response({
+                    'status': 'unhealthy',
+                    'celery': 'no_workers',
+                    'broker': broker_url,
+                    'message': 'Celery is configured but no workers are running'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+                
+        except Exception as e:
+            return Response({
+                'status': 'unhealthy',
+                'celery': 'connection_error',
+                'broker': broker_url,
+                'error': str(e),
+                'message': 'Cannot connect to Celery workers'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+    except Exception as e:
+        return Response({
+            'status': 'unhealthy',
+            'celery': 'not_configured',
+            'error': str(e),
+            'message': 'Celery is not properly configured'
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_booking(request):

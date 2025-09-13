@@ -1,7 +1,7 @@
 services:
   web:
     build: .
-    command: sh -c "celery -A Evently worker --loglevel=info --detach && /app/docker-entrypoint.sh"
+    command: /app/start.sh
     volumes:
       - .:/app
     ports:

@@ -2,6 +2,9 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # Health Check API
+    path('health/', views.health_check, name='health_check'),
+    
     # Book Ticket API
     path('bookings/', views.create_booking, name='create_booking'),
     
