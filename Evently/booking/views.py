@@ -43,10 +43,19 @@ def health_check(request):
     """
     try:
         from celery import current_app
+        import subprocess
+        import os
         
         # Check if Celery app is configured
         app = current_app
         broker_url = app.conf.broker_url
+        
+        # Check running processes
+        try:
+            result = subprocess.run(['ps', 'aux'], capture_output=True, text=True)
+            celery_processes = [line for line in result.stdout.split('\n') if 'celery' in line.lower()]
+        except:
+            celery_processes = []
         
         # Try to inspect active workers
         try:
@@ -60,6 +69,7 @@ def health_check(request):
                     'celery': 'running',
                     'workers': worker_count,
                     'broker': broker_url,
+                    'processes': celery_processes,
                     'message': f'Celery is running with {worker_count} worker(s)'
                 })
             else:
@@ -67,6 +77,7 @@ def health_check(request):
                     'status': 'unhealthy',
                     'celery': 'no_workers',
                     'broker': broker_url,
+                    'processes': celery_processes,
                     'message': 'Celery is configured but no workers are running'
                 }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
                 
@@ -75,6 +86,7 @@ def health_check(request):
                 'status': 'unhealthy',
                 'celery': 'connection_error',
                 'broker': broker_url,
+                'processes': celery_processes,
                 'error': str(e),
                 'message': 'Cannot connect to Celery workers'
             }, status=status.HTTP_503_SERVICE_UNAVAILABLE)

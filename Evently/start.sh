@@ -19,18 +19,42 @@ python manage.py migrate
 
 echo "✅ Database setup complete!"
 
-# Start Celery worker in background
+# Test Redis connection first
+echo "🔍 Testing Redis connection..."
+python -c "
+import os
+import redis
+from django.conf import settings
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Evently.settings')
+import django
+django.setup()
+
+try:
+    r = redis.from_url(settings.CELERY_BROKER_URL)
+    r.ping()
+    print('✅ Redis connection successful!')
+except Exception as e:
+    print(f'❌ Redis connection failed: {e}')
+    exit(1)
+"
+
+# Start Celery worker in background with better error handling
 echo "🔧 Starting Celery worker in background..."
-celery -A Evently worker --loglevel=info --detach --pidfile=/tmp/celery.pid
+nohup celery -A Evently worker --loglevel=info > /tmp/celery.log 2>&1 &
+CELERY_PID=$!
 
 # Wait a moment for Celery to start
-sleep 3
+sleep 5
 
 # Check if Celery is running
-if pgrep -f "celery.*worker" > /dev/null; then
-    echo "✅ Celery worker started successfully!"
+if ps -p $CELERY_PID > /dev/null; then
+    echo "✅ Celery worker started successfully! PID: $CELERY_PID"
+    echo "📋 Celery logs:"
+    tail -n 10 /tmp/celery.log
 else
     echo "❌ Celery worker failed to start!"
+    echo "📋 Celery error logs:"
+    cat /tmp/celery.log
     exit 1
 fi
 
