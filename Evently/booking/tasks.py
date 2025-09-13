@@ -21,58 +21,72 @@ def process_booking_task(booking_id):
     - Update booking status
     - Send email notification
     """
+    logger.info(f"🚀 CELERY TASK STARTED: Processing booking {booking_id}")
+    
     try:
         with transaction.atomic():
             # Get booking with lock
+            logger.info(f"📋 Fetching booking {booking_id} from database")
             booking = Booking.objects.select_for_update().get(id=booking_id)
             event = Event.objects.select_for_update().get(id=booking.event.id)
             
-            logger.info(f"Processing booking {booking_id} for event {event.id}")
+            logger.info(f"✅ Booking {booking_id} found - Event: {event.name}, Requested tickets: {booking.ticket_count}")
+            logger.info(f"📊 Event {event.id} - Available tickets: {event.available_tickets}, Capacity: {event.capacity}")
             
             # Check if event still has available tickets
             if event.available_tickets < booking.ticket_count:
                 # Booking failed - insufficient tickets
+                logger.warning(f"❌ INSUFFICIENT TICKETS: Booking {booking_id} - Available: {event.available_tickets}, Requested: {booking.ticket_count}")
+                
                 booking.status = 'failed'
                 booking.save(update_fields=['status'])
                 
-                logger.warning(f"Booking {booking_id} failed: insufficient tickets")
+                logger.info(f"💾 Booking {booking_id} status updated to 'failed'")
                 
                 # Send failure email
+                logger.info(f"📧 Queuing failure email for booking {booking_id}")
                 send_booking_email.delay(booking_id, 'failed')
                 return f"Booking {booking_id} failed: insufficient tickets"
             
             # Booking successful
+            logger.info(f"✅ BOOKING SUCCESS: Booking {booking_id} - Sufficient tickets available")
+            
             booking.status = 'confirmed'
             booking.save(update_fields=['status'])
             
-            logger.info(f"Booking {booking_id} confirmed successfully")
+            logger.info(f"💾 Booking {booking_id} status updated to 'confirmed'")
             
             # Send success email
+            logger.info(f"📧 Queuing success email for booking {booking_id}")
             send_booking_email.delay(booking_id, 'confirmed')
+            
+            logger.info(f"🎉 CELERY TASK COMPLETED: Booking {booking_id} confirmed successfully")
             return f"Booking {booking_id} confirmed successfully"
             
     except ObjectDoesNotExist as e:
-        logger.error(f"Booking or event not found: {booking_id} - {str(e)}")
+        logger.error(f"❌ DATABASE ERROR: Booking or event not found: {booking_id} - {str(e)}")
         # Try to update booking status to failed if it exists
         try:
             booking = Booking.objects.get(id=booking_id)
             booking.status = 'failed'
             booking.save(update_fields=['status'])
+            logger.info(f"💾 Updated booking {booking_id} status to 'failed' due to object not found")
             send_booking_email.delay(booking_id, 'failed')
-        except:
-            pass
+        except Exception as update_error:
+            logger.error(f"❌ CRITICAL: Could not update booking {booking_id} status: {str(update_error)}")
         return f"Booking {booking_id} failed: object not found"
         
     except Exception as e:
-        logger.error(f"Unexpected error processing booking {booking_id}: {str(e)}")
+        logger.error(f"❌ UNEXPECTED ERROR: Processing booking {booking_id}: {str(e)}", exc_info=True)
         # Try to update booking status to failed if it exists
         try:
             booking = Booking.objects.get(id=booking_id)
             booking.status = 'failed'
             booking.save(update_fields=['status'])
+            logger.info(f"💾 Updated booking {booking_id} status to 'failed' due to unexpected error")
             send_booking_email.delay(booking_id, 'failed')
-        except:
-            pass
+        except Exception as update_error:
+            logger.error(f"❌ CRITICAL: Could not update booking {booking_id} status: {str(update_error)}")
         return f"Booking {booking_id} failed: {str(e)}"
 
 
@@ -81,10 +95,14 @@ def send_booking_email(booking_id, status):
     """
     Send email notification for booking status
     """
+    logger.info(f"📧 EMAIL TASK STARTED: Sending {status} email for booking {booking_id}")
+    
     try:
         booking = Booking.objects.get(id=booking_id)
         user = booking.user
         event = booking.event
+        
+        logger.info(f"📋 Email details - User: {user.email}, Event: {event.name}, Status: {status}")
         
         # Email subject and template based on status
         if status == 'confirmed':
@@ -105,9 +123,11 @@ def send_booking_email(booking_id, status):
             'booking_id': booking_id,
         }
         
+        logger.info(f"📝 Rendering email template: {template}")
         # Render email content
         html_content = render_to_string(template, context)
         
+        logger.info(f"📤 Sending email to {user.email} with subject: {subject}")
         # Send email
         send_mail(
             subject=subject,
@@ -118,9 +138,9 @@ def send_booking_email(booking_id, status):
             fail_silently=False,
         )
         
-        logger.info(f"Email sent for booking {booking_id} with status {status}")
+        logger.info(f"✅ EMAIL SENT SUCCESSFULLY: Booking {booking_id} - {status} email sent to {user.email}")
         return f"Email sent for booking {booking_id}"
         
     except Exception as e:
-        logger.error(f"Failed to send email for booking {booking_id}: {str(e)}")
+        logger.error(f"❌ EMAIL FAILED: Booking {booking_id} - {str(e)}", exc_info=True)
         return f"Email failed for booking {booking_id}: {str(e)}"

@@ -74,13 +74,15 @@ def create_booking(request):
             )
             
             # Queue the booking processing task
+            logger.info(f"🚀 QUEUING TASK: About to queue booking {booking.id} for async processing")
             task = process_booking_task.delay(booking.id)
             
             # Store the task ID in the booking
             booking.task_id = task.id
             booking.save(update_fields=['task_id'])
             
-            logger.info(f"Booking {booking.id} queued for processing with task {task.id}")
+            logger.info(f"✅ TASK QUEUED SUCCESSFULLY: Booking {booking.id} queued with task ID {task.id}")
+            logger.info(f"📊 Task details - Task ID: {task.id}, Booking ID: {booking.id}, Event: {event.name}, Tickets: {number_of_tickets}")
             
             # Return immediate response with processing status
             booking_serializer = BookingSerializer(booking)
